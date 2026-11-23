@@ -65,19 +65,21 @@ export function weekOverWeek(list: WeightEntry[], todayKey: string): number | nu
   return now !== null && before !== null ? now - before : null;
 }
 
-export function fmtKg(kg: number, digits = 1): string {
-  return kg.toFixed(digits);
+/** Up to 2 decimals, at least 1: 91.65 → "91.65", 81.4 → "81.4", 80 → "80.0". */
+export function fmtKg(kg: number): string {
+  const s = (Math.round(kg * 100) / 100).toFixed(2);
+  return s.endsWith('0') ? s.slice(0, -1) : s;
 }
 
 export function fmtDelta(kg: number): string {
-  const r = Math.round(kg * 10) / 10;
-  if (r === 0) return '±0.0';
-  return `${r > 0 ? '+' : '−'}${Math.abs(r).toFixed(1)}`;
+  const r = Math.round(kg * 100) / 100;
+  if (r === 0) return '±0.00';
+  return `${r > 0 ? '+' : '−'}${Math.abs(r).toFixed(2)}`;
 }
 
-/** Accepts "82.4" or "82,4"; returns null outside a sane range. */
+/** Accepts "91.65" or "91,65" (kept to 2 decimals); returns null outside a sane range. */
 export function parseKg(text: string): number | null {
   const n = parseFloat(text.replace(',', '.'));
   if (!Number.isFinite(n) || n < 20 || n > 400) return null;
-  return Math.round(n * 10) / 10;
+  return Math.round(n * 100) / 100;
 }

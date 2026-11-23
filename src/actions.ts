@@ -68,7 +68,7 @@ export function renameDay(routineId: string, day: number, name: string) {
 export function addItem(routineId: string, day: number, exerciseName: string) {
   update((d) => {
     const exerciseId = findOrCreateExercise(d, exerciseName);
-    withDay(d, routineId, day, (p) => p.items.push({ id: uid(), exerciseId, sets: 3, reps: '8–12', restSec: 90, note: '' }));
+    withDay(d, routineId, day, (p) => p.items.push({ id: uid(), exerciseId, sets: 3, reps: '8–12', restSec: 120, note: '' }));
   });
 }
 

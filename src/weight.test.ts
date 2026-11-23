@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dailySeries, fmtDelta, parseKg, rollingAvg, weekOverWeek, weeklyAverages } from './weight';
+import { dailySeries, fmtDelta, fmtKg, parseKg, rollingAvg, weekOverWeek, weeklyAverages } from './weight';
 
 const e = (date: string, kg: number) => ({ date, kg });
 
@@ -35,9 +35,14 @@ describe('body weight', () => {
   });
 
   it('parses and formats', () => {
-    expect(parseKg('82,45')).toBe(82.5);
+    expect(parseKg('91.65')).toBe(91.65);
+    expect(parseKg('82,45')).toBe(82.45);
+    expect(parseKg('82.456')).toBe(82.46);
     expect(parseKg('8')).toBeNull();
-    expect(fmtDelta(-0.94)).toBe('−0.9');
-    expect(fmtDelta(0.02)).toBe('±0.0');
+    expect(fmtKg(91.65)).toBe('91.65');
+    expect(fmtKg(81.4)).toBe('81.4');
+    expect(fmtKg(80)).toBe('80.0');
+    expect(fmtDelta(-0.946)).toBe('−0.95');
+    expect(fmtDelta(0.002)).toBe('±0.00');
   });
 });
