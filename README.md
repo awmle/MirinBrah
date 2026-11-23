@@ -1,4 +1,4 @@
-# MirinBrah
+# You Mirin Brah
 
 A personal workout app for iPhone, built as an installable web app. Everything is stored on the phone; there is no server or account.
 

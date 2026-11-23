@@ -11,8 +11,8 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['apple-touch-icon.png', 'favicon.png'],
       manifest: {
-        name: 'MirinBrah',
-        short_name: 'MirinBrah',
+        name: 'You Mirin Brah',
+        short_name: 'Mirin Brah',
         description: 'Workout routines, logging and progress — stored on your phone.',
         display: 'standalone',
         orientation: 'portrait',

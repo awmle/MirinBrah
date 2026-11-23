@@ -20,7 +20,7 @@ export function Settings({ go }: { go: Go }) {
     const file = new File([json], name, { type: 'application/json' });
     try {
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'MirinBrah backup' });
+        await navigator.share({ files: [file], title: 'You Mirin Brah backup' });
         setMessage('Backup shared. Save it to Files or iCloud Drive.');
         return;
       }
@@ -43,7 +43,7 @@ export function Settings({ go }: { go: Go }) {
       if (!isValidData(parsed)) throw new Error('bad');
       setPending(parsed);
     } catch {
-      setMessage("That file isn't a MirinBrah backup.");
+      setMessage("That file isn't a You Mirin Brah backup.");
     }
     if (fileRef.current) fileRef.current.value = '';
   };
