@@ -9,6 +9,7 @@ import { Summary } from './screens/Summary';
 import { Progress } from './screens/Progress';
 import { Settings } from './screens/Settings';
 import { Weight } from './screens/Weight';
+import { Toast } from './toast';
 
 export function App() {
   const [route, setRoute] = useState<Route>({ name: 'tab', tab: 'today' });
@@ -36,6 +37,7 @@ export function App() {
   return (
     <div className="app">
       {screen}
+      <Toast />
       {route.name === 'tab' && <TabBar tab={route.tab} onTab={(tab) => go({ name: 'tab', tab })} />}
     </div>
   );

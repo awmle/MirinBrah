@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { showToast } from '../toast';
 import { useData } from '../store';
 import { ConfirmSheet, ExerciseNameSheet, Icon, Sheet } from '../components';
 import type { Go } from '../routes';
@@ -15,7 +16,16 @@ export function EditDay({ routineId, day, go }: { routineId: string; day: number
   const [sheet, setSheet] = useState<SheetState>(null);
   const routine = data.routines.find((r) => r.id === routineId);
   const plan = routine?.days[day];
-  const back = () => go({ name: 'tab', tab: 'routines' });
+  const [snapshot] = useState(() => JSON.stringify(plan ?? null));
+  const changed = JSON.stringify(plan ?? null) !== snapshot;
+  const back = () => {
+    if (changed) showToast('Routine updated');
+    go({ name: 'tab', tab: 'routines' });
+  };
+  const done = () => {
+    showToast(changed ? 'Routine updated' : 'Saved');
+    go({ name: 'tab', tab: 'routines' });
+  };
   const close = () => setSheet(null);
 
   if (!routine || !plan) {
@@ -36,7 +46,7 @@ export function EditDay({ routineId, day, go }: { routineId: string; day: number
           <Icon name="chevron-left" stroke={2.2} />
           Routine
         </button>
-        <button type="button" className="link-btn strong" onClick={back}>
+        <button type="button" className="link-btn strong" onClick={done}>
           Done
         </button>
       </header>
