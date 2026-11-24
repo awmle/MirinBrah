@@ -4,7 +4,7 @@ import { Icon, Sheet } from '../components';
 import type { Go } from '../routes';
 import { bestE1rm, doneSessions, exerciseName, fmtSet, lastEntryFor, num, sessionDuration, type SetNum } from '../logic';
 import { clock, mediumDate, mmss } from '../dates';
-import { discardSession, finishSession, updateSession } from '../actions';
+import { discardSession, finishSession, updateExerciseNote, updateSession } from '../actions';
 import { beep, unlockAudio, useNow, useWakeLock } from '../hooks';
 
 interface RestState {
@@ -160,14 +160,7 @@ export function Workout({ sessionId, go }: { sessionId: string; go: Go }) {
           </h1>
         </div>
 
-        {entry.note && (
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--surface)', borderRadius: 14, padding: '12px 14px' }}>
-            <span className="muted" style={{ flex: 'none', marginTop: 1 }}>
-              <Icon name="note" size={18} />
-            </span>
-            <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--text-2)', whiteSpace: 'pre-line' }}>{entry.note}</span>
-          </div>
-        )}
+        <NoteEditor key={entry.id} note={entry.note} exerciseName={name} onSave={(note) => updateExerciseNote(session.id, idx, note)} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, color: 'var(--muted)' }}>
           <span>{prev ? `Last time · ${mediumDate(prev.session.date)}${prev.session.deload ? ' (deload)' : ''}` : 'First time doing this'}</span>
@@ -272,5 +265,64 @@ export function Workout({ sessionId, go }: { sessionId: string; go: Go }) {
         </Sheet>
       )}
     </>
+  );
+}
+
+/** The exercise note: tap to edit. Saved to this workout and the routine, so it's there next time. */
+function NoteEditor({ note, exerciseName, onSave }: { note: string; exerciseName: string; onSave: (note: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(note);
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!editing) return;
+    const el = ref.current;
+    if (!el) return;
+    el.focus({ preventScroll: true });
+    el.setSelectionRange(el.value.length, el.value.length);
+  }, [editing]);
+
+  const save = () => {
+    const next = draft.trim();
+    if (next !== note) onSave(next);
+    setDraft(next);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--surface)', borderRadius: 14, padding: 12 }}>
+        <label htmlFor="exercise-note" className="small muted" style={{ fontWeight: 600 }}>
+          Note for {exerciseName}
+        </label>
+        <textarea id="exercise-note" ref={ref} className="text-input" rows={3} value={draft} placeholder="Cues, setup, seat height…" onChange={(e) => setDraft(e.target.value)} style={{ fontSize: 15 }} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            className="btn small"
+            style={{ flex: 1, height: 40 }}
+            onClick={() => {
+              setDraft(note);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+          <button type="button" className="btn small" style={{ flex: 2, height: 40, background: 'var(--accent)', color: 'var(--accent-ink)' }} onClick={save}>
+            Save note
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <button type="button" onClick={() => setEditing(true)} aria-label={note ? `Edit note for ${exerciseName}` : `Add a note for ${exerciseName}`} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--surface)', borderRadius: 14, padding: '12px 14px', textAlign: 'left', width: '100%', minHeight: 44 }}>
+      <span style={{ flex: 1, fontSize: 14, lineHeight: 1.45, color: note ? 'var(--text-2)' : 'var(--muted)', whiteSpace: 'pre-line' }}>{note || 'Add a note (cues, setup, seat height…)'}</span>
+      <span style={{ flex: 'none', marginTop: 1, color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
+        <Icon name="note" size={16} />
+        {note ? 'Edit' : 'Add'}
+      </span>
+    </button>
   );
 }

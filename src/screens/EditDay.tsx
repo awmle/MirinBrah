@@ -3,7 +3,7 @@ import { useData } from '../store';
 import { ConfirmSheet, ExerciseNameSheet, Icon, Sheet } from '../components';
 import type { Go } from '../routes';
 import type { PlanItem } from '../types';
-import { WEEKDAYS, mmss, parseRest } from '../dates';
+import { WEEKDAYS, mmss, parseRest, restMask } from '../dates';
 import { defaultDeloadSets, exerciseName } from '../logic';
 import { addItem, clearDeloadOverride, makeRestDay, moveItem, removeItem, renameDay, replaceItemExercise, updateItem } from '../actions';
 import { TextSheet } from './Routines';
@@ -227,11 +227,13 @@ function ItemCard({ item, name, routineId, day, onReplace, onMore }: { item: Pla
           <input
             inputMode="numeric"
             value={rest}
-            placeholder="1:30"
+            placeholder="2:00"
+            aria-label={`Rest for ${name}, minutes and seconds`}
             onChange={(e) => {
-              setRest(e.target.value);
-              const s = parseRest(e.target.value);
-              if (s !== null && s <= 3600) updateItem(routineId, day, id, { restSec: s });
+              const masked = restMask(e.target.value);
+              setRest(masked);
+              const s = parseRest(masked);
+              if (s !== null) updateItem(routineId, day, id, { restSec: s });
             }}
             onBlur={() => setRest(mmss(item.restSec))}
           />

@@ -1,7 +1,7 @@
 import type { Data, DayPlan, PlanItem, Session } from './types';
 import { update } from './store';
 import { buildSession, uid } from './logic';
-import { dateKey, mondayKey } from './dates';
+import { dateKey, mondayKey, parseKey, weekdayIndex } from './dates';
 
 export function findOrCreateExercise(d: Data, name: string): string {
   const clean = name.trim().replace(/\s+/g, ' ');
@@ -199,5 +199,19 @@ export function logWeight(date: string, kg: number) {
 export function deleteWeight(date: string) {
   update((d) => {
     d.bodyweight = d.bodyweight.filter((e) => e.date !== date);
+  });
+}
+
+/** Edits an exercise's note mid-workout: saved on this session and on the routine, so it shows next time too. */
+export function updateExerciseNote(sessionId: string, entryIndex: number, note: string) {
+  update((d) => {
+    const s = d.sessions.find((x) => x.id === sessionId);
+    const entry = s?.entries[entryIndex];
+    if (!s || !entry) return;
+    entry.note = note;
+    const routine = d.routines.find((r) => r.id === s.routineId);
+    const plan = routine?.days[weekdayIndex(parseKey(s.date))];
+    const item = plan?.items.find((it) => it.exerciseId === entry.exerciseId);
+    if (item) item.note = note;
   });
 }

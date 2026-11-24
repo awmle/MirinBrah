@@ -77,3 +77,14 @@ export function parseRest(text: string): number | null {
   const m = /^(\d+):(\d{1,2})$/.exec(t);
   return m ? Number(m[1]) * 60 + Number(m[2]) : null;
 }
+
+/**
+ * Formats typed digits as m:ss with a fixed colon, filling from the right like a microwave:
+ * "2" → "0:02", "20" → "0:20", "200" → "2:00". Non-digits are ignored, up to 4 digits (99:59).
+ */
+export function restMask(text: string): string {
+  const digits = text.replace(/\D/g, '').replace(/^0+/, '').slice(0, 4);
+  if (!digits) return '';
+  const s = digits.padStart(3, '0');
+  return `${Number(s.slice(0, -2))}:${s.slice(-2)}`;
+}

@@ -107,3 +107,17 @@ describe('dates', () => {
     expect(parseRest('abc')).toBeNull();
   });
 });
+
+describe('rest time input', () => {
+  it('fills m:ss from the right with a fixed colon', async () => {
+    const { restMask, parseRest } = await import('./dates');
+    expect(restMask('2')).toBe('0:02');
+    expect(restMask('20')).toBe('0:20');
+    expect(restMask('200')).toBe('2:00');
+    expect(restMask('2:005')).toBe('20:05');
+    expect(restMask('2:0')).toBe('0:20');
+    expect(restMask('0:01')).toBe('0:01');
+    expect(restMask('')).toBe('');
+    expect(parseRest(restMask('130'))).toBe(90);
+  });
+});
