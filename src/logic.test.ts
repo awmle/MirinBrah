@@ -121,3 +121,18 @@ describe('rest time input', () => {
     expect(parseRest(restMask('130'))).toBe(90);
   });
 });
+
+describe('exercise notes', () => {
+  it('lists notes newest first, collapses repeats, ends with an old routine note', async () => {
+    const { exerciseNotes } = await import('./logic');
+    const mk = (id: string, date: string, note: string): Session => ({ ...session(id, date, [{ ...entry([[100, 5]]), note }]) });
+    const d = data([mk('a', '2026-11-02', 'Elbows in'), mk('b', '2026-11-09', 'Elbows in'), mk('c', '2026-11-16', ''), mk('d', '2026-11-23', 'Pause 1s')]);
+    d.routines = [{ id: 'r', name: 'R', createdAt: '', days: [{ name: 'Push', items: [{ id: 'i', exerciseId: 'bench', sets: 3, reps: '8', restSec: 120, note: 'Old cue' }] }, null, null, null, null, null, null] }];
+    expect(exerciseNotes(d, 'bench').map((n) => [n.date, n.text])).toEqual([
+      ['2026-11-23', 'Pause 1s'],
+      ['2026-11-09', 'Elbows in'],
+      [null, 'Old cue']
+    ]);
+    expect(exerciseNotes(d, 'bench', d.sessions[3]).map((n) => n.text)).toEqual(['Elbows in', 'Old cue']);
+  });
+});

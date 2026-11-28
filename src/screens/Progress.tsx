@@ -336,6 +336,11 @@ function ByExercise({ data, exerciseId, setExerciseId, go }: { data: Data; exerc
                 <span className="row-main">
                   <span style={{ fontSize: 14, fontWeight: 600 }}>{mediumDate(p.date)}</span>
                   <span className="row-sub">{fmtSets(p.entry)}</span>
+                  {p.entry.note.trim() && (
+                    <span className="note-text" style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--text-2)', marginTop: 4 }}>
+                      {p.entry.note.trim()}
+                    </span>
+                  )}
                 </span>
                 {prSessions.has(p.sessionId) && <span className="tag accent">PR</span>}
                 {p.deload && <span className="tag deload">DELOAD</span>}

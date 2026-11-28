@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useData } from '../store';
-import { ConfirmSheet, Icon } from '../components';
+import { AutoTextarea, ConfirmSheet, Icon } from '../components';
 import type { Go, Route } from '../routes';
 import { compareEntries, exerciseName, fmtSet, fmtSets, fmtVolume, lastEntryFor, sessionDoneSetCount, sessionDuration, sessionPRs, sessionVolume } from '../logic';
 import { clock, mediumDate } from '../dates';
@@ -26,7 +26,7 @@ export function Summary({ sessionId, justFinished, back, go }: { sessionId: stri
   const prs = sessionPRs(data, session);
   const rows = session.entries.map((e) => {
     const prev = lastEntryFor(data, e.exerciseId, session);
-    return { id: e.id, name: exerciseName(data, e.exerciseId), sets: fmtSets(e), delta: compareEntries(e, prev?.entry ?? null) };
+    return { id: e.id, name: exerciseName(data, e.exerciseId), sets: fmtSets(e), note: e.note.trim(), delta: compareEntries(e, prev?.entry ?? null) };
   });
 
   return (
@@ -92,6 +92,11 @@ export function Summary({ sessionId, justFinished, back, go }: { sessionId: stri
                 <span className="row-main">
                   <span className="row-title">{r.name}</span>
                   <span className="row-sub">{r.sets}</span>
+                  {r.note && (
+                    <span className="note-text" style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--text-2)', marginTop: 4 }}>
+                      {r.note}
+                    </span>
+                  )}
                 </span>
                 <span style={{ fontSize: 13, fontWeight: 700, color: r.delta.up ? 'var(--accent)' : 'var(--muted)', flex: 'none' }}>{r.delta.text}</span>
               </div>
@@ -101,7 +106,7 @@ export function Summary({ sessionId, justFinished, back, go }: { sessionId: stri
 
         <label style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <span className="eyebrow">Session note</span>
-          <textarea className="text-input" rows={2} style={{ background: 'var(--surface)' }} placeholder="How did it feel? Sleep, energy, pain…" value={session.note} onChange={(e) => updateSession(session.id, (s) => (s.note = e.target.value))} />
+          <AutoTextarea className="text-input" rows={2} maxRows={10} style={{ background: 'var(--surface)' }} placeholder="How did it feel? Sleep, energy, pain…" value={session.note} onChange={(e) => updateSession(session.id, (s) => (s.note = e.target.value))} />
         </label>
 
         {!justFinished && (

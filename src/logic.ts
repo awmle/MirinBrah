@@ -194,7 +194,7 @@ export function buildSession(routine: Routine, day: DayPlan, date: Date, deload:
       exerciseId: it.exerciseId,
       reps: it.reps,
       restSec: it.restSec,
-      note: it.note,
+      note: '',
       sets: Array.from({ length: plannedSets(it, deload) }, (): SetLog => ({ weight: '', reps: '', done: false }))
     })),
     note: '',
@@ -239,4 +239,39 @@ export function daysAgoKey(days: number, from = new Date()): string {
 
 export function weeksBetween(aKey: string, bKey: string): number {
   return Math.round((parseKey(bKey).getTime() - parseKey(aKey).getTime()) / (7 * 86400000));
+}
+
+export interface NoteItem {
+  sessionId: string | null;
+  date: string | null;
+  text: string;
+  deload: boolean;
+}
+
+/**
+ * Notes written for an exercise in past workouts, newest first. A note repeated in back-to-back workouts is shown once
+ * (at its newest date). An older routine-level note, if any, comes last.
+ */
+export function exerciseNotes(data: Data, exerciseId: string, exclude?: Session): NoteItem[] {
+  const out: NoteItem[] = [];
+  const list = doneSessions(data);
+  for (let i = list.length - 1; i >= 0; i--) {
+    const s = list[i];
+    if (exclude && s.id === exclude.id) continue;
+    for (const e of s.entries) {
+      const text = e.note.trim();
+      if (e.exerciseId !== exerciseId || !text) continue;
+      if (out.length && out[out.length - 1].text === text) continue;
+      out.push({ sessionId: s.id, date: s.date, text, deload: s.deload });
+    }
+  }
+  for (const r of data.routines) {
+    for (const day of r.days) {
+      for (const it of day?.items ?? []) {
+        const text = it.note.trim();
+        if (it.exerciseId === exerciseId && text && !out.some((n) => n.text === text)) out.push({ sessionId: null, date: null, text, deload: false });
+      }
+    }
+  }
+  return out;
 }

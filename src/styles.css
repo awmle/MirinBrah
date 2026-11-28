@@ -827,3 +827,29 @@ textarea.text-input {
     transform: translate(-50%, 12px);
   }
 }
+
+.note-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.notes-scroll {
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--line);
+}
+
+.notes-scroll > * + * {
+  border-top: 1px solid var(--line);
+}
+
+/* Children of a scrolling page keep their natural height; the page scrolls instead of squashing them. */
+.scroll > * {
+  flex-shrink: 0;
+}

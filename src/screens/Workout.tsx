@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useData } from '../store';
-import { Icon, Sheet } from '../components';
+import { AutoTextarea, Icon, Sheet } from '../components';
 import type { Go } from '../routes';
-import { bestE1rm, doneSessions, exerciseName, fmtSet, lastEntryFor, num, sessionDuration, type SetNum } from '../logic';
+import { bestE1rm, doneSessions, exerciseName, exerciseNotes, fmtSet, lastEntryFor, num, sessionDuration, type SetNum, type NoteItem } from '../logic';
 import { clock, mediumDate, mmss } from '../dates';
 import { discardSession, finishSession, updateExerciseNote, updateSession } from '../actions';
 import { beep, unlockAudio, useNow, useWakeLock } from '../hooks';
@@ -160,7 +160,7 @@ export function Workout({ sessionId, go }: { sessionId: string; go: Go }) {
           </h1>
         </div>
 
-        <NoteEditor key={entry.id} note={entry.note} exerciseName={name} onSave={(note) => updateExerciseNote(session.id, idx, note)} />
+        <ExerciseNotes key={entry.id} note={entry.note} history={exerciseNotes(data, entry.exerciseId, session)} exerciseName={name} onSave={(note) => updateExerciseNote(session.id, idx, note)} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 13, color: 'var(--muted)' }}>
           <span>{prev ? `Last time · ${mediumDate(prev.session.date)}${prev.session.deload ? ' (deload)' : ''}` : 'First time doing this'}</span>
@@ -268,11 +268,15 @@ export function Workout({ sessionId, go }: { sessionId: string; go: Go }) {
   );
 }
 
-/** The exercise note: tap to edit. Saved to this workout and the routine, so it's there next time. */
-function NoteEditor({ note, exerciseName, onSave }: { note: string; exerciseName: string; onSave: (note: string) => void }) {
+/**
+ * Notes for this exercise: today's note (editable) plus earlier workouts' notes. The latest one shows by default; older ones
+ * are in a scrollable list, newest first.
+ */
+function ExerciseNotes({ note, history, exerciseName, onSave }: { note: string; history: NoteItem[]; exerciseName: string; onSave: (note: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note);
-  const ref = useRef<HTMLTextAreaElement>(null);
+  const [showOlder, setShowOlder] = useState(false);
+  const ref = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     if (!editing) return;
@@ -289,40 +293,73 @@ function NoteEditor({ note, exerciseName, onSave }: { note: string; exerciseName
     setEditing(false);
   };
 
-  if (editing) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'var(--surface)', borderRadius: 14, padding: 12 }}>
-        <label htmlFor="exercise-note" className="small muted" style={{ fontWeight: 600 }}>
-          Note for {exerciseName}
-        </label>
-        <textarea id="exercise-note" ref={ref} className="text-input" rows={3} value={draft} placeholder="Cues, setup, seat height…" onChange={(e) => setDraft(e.target.value)} style={{ fontSize: 15 }} />
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            type="button"
-            className="btn small"
-            style={{ flex: 1, height: 40 }}
-            onClick={() => {
-              setDraft(note);
-              setEditing(false);
-            }}
-          >
-            Cancel
-          </button>
-          <button type="button" className="btn small" style={{ flex: 2, height: 40, background: 'var(--accent)', color: 'var(--accent-ink)' }} onClick={save}>
-            Save note
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const today = note.trim();
+  const latest: NoteItem | null = today ? null : history[0] ?? null;
+  const older = today ? history : history.slice(1);
+  const label = (n: NoteItem) => (n.date ? mediumDate(n.date) + (n.deload ? " · deload" : "") : "Earlier routine note");
 
   return (
-    <button type="button" onClick={() => setEditing(true)} aria-label={note ? `Edit note for ${exerciseName}` : `Add a note for ${exerciseName}`} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--surface)', borderRadius: 14, padding: '12px 14px', textAlign: 'left', width: '100%', minHeight: 44 }}>
-      <span style={{ flex: 1, fontSize: 14, lineHeight: 1.45, color: note ? 'var(--text-2)' : 'var(--muted)', whiteSpace: 'pre-line' }}>{note || 'Add a note (cues, setup, seat height…)'}</span>
-      <span style={{ flex: 'none', marginTop: 1, color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600 }}>
-        <Icon name="note" size={16} />
-        {note ? 'Edit' : 'Add'}
-      </span>
-    </button>
+    <section aria-label={`Notes for ${exerciseName}`} style={{ background: "var(--surface)", borderRadius: 14, overflow: "hidden", minWidth: 0 }}>
+      {editing ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: 12 }}>
+          <label htmlFor="exercise-note" className="small muted" style={{ fontWeight: 600 }}>
+            Today's note for {exerciseName}
+          </label>
+          <AutoTextarea id="exercise-note" inputRef={ref} className="text-input" rows={2} maxRows={8} value={draft} placeholder="How it felt, cues, setup, seat height…" onChange={(e) => setDraft(e.target.value)} style={{ fontSize: 15 }} />
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              type="button"
+              className="btn small"
+              style={{ flex: 1, height: 40 }}
+              onClick={() => {
+                setDraft(note);
+                setEditing(false);
+              }}
+            >
+              Cancel
+            </button>
+            <button type="button" className="btn small" style={{ flex: 2, height: 40, background: "var(--accent)", color: "var(--accent-ink)" }} onClick={save}>
+              Save note
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button type="button" onClick={() => setEditing(true)} aria-label={today ? `Edit today's note for ${exerciseName}` : `Add a note for ${exerciseName} today`} style={{ display: "flex", flexDirection: "column", gap: 4, padding: "12px 14px", textAlign: "left", width: "100%", minHeight: 44 }}>
+          <span style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, width: "100%" }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>{today ? "Today" : latest ? `Last note · ${label(latest)}` : "Notes"}</span>
+            <span style={{ flex: "none", color: "var(--accent)", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, fontWeight: 600 }}>
+              <Icon name="note" size={15} />
+              {today ? "Edit" : "Add today's"}
+            </span>
+          </span>
+          <span className="note-text" style={{ fontSize: 14, lineHeight: 1.45, color: today || latest ? "var(--text-2)" : "var(--muted)" }}>
+            {today || latest?.text || "No notes yet. Tap to add one for today."}
+          </span>
+        </button>
+      )}
+
+      {older.length > 0 && (
+        <>
+          <button type="button" aria-expanded={showOlder} onClick={() => setShowOlder(!showOlder)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", minHeight: 40, padding: "0 14px", borderTop: "1px solid var(--line)", fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>
+            <span>
+              {showOlder ? "Hide" : "Show"} previous notes ({older.length})
+            </span>
+            <Icon name={showOlder ? "up" : "down"} size={16} />
+          </button>
+          {showOlder && (
+            <div className="notes-scroll">
+              {older.map((n, i) => (
+                <div key={(n.sessionId ?? "routine") + i} style={{ padding: "10px 14px", display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--muted)" }}>{label(n)}</span>
+                  <span className="note-text" style={{ fontSize: 14, lineHeight: 1.45, color: "var(--text-2)" }}>
+                    {n.text}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
   );
 }

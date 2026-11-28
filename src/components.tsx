@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject, type TextareaHTMLAttributes } from 'react';
 import { useData } from './store';
 
 type IconName = 'calendar' | 'dumbbell' | 'chart' | 'scale' | 'play' | 'chevron-right' | 'chevron-left' | 'chevron-down' | 'close' | 'plus' | 'check' | 'more' | 'swap' | 'note' | 'info' | 'trophy' | 'gear' | 'up' | 'down';
@@ -224,4 +224,21 @@ export function ConfirmSheet({ title, body, confirmLabel, danger, onConfirm, onC
       </div>
     </Sheet>
   );
+}
+
+/** A textarea that grows with its content up to `maxRows`, then scrolls inside. */
+export function AutoTextarea({ maxRows = 8, style, value, inputRef, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement> & { maxRows?: number; inputRef?: RefObject<HTMLTextAreaElement | null> }) {
+  const own = useRef<HTMLTextAreaElement | null>(null);
+  const ref = inputRef ?? own;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    const line = parseFloat(cs.lineHeight) || 22;
+    const max = line * maxRows + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, max)}px`;
+    el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+  }, [value, maxRows, ref]);
+  return <textarea {...props} ref={ref} value={value} style={{ resize: "none", lineHeight: 1.45, ...style }} />;
 }

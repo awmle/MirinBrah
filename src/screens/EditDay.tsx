@@ -96,7 +96,7 @@ export function EditDay({ routineId, day, go }: { routineId: string; day: number
           confirmLabel="Replace"
           info={
             <>
-              {exerciseName(data, sheet.item.exerciseId)} keeps all its history under Progress. The new exercise keeps the same sets, reps, rest and note, and its own history starts with its first session (or continues, if you've done it before). {plan.name}'s
+              {exerciseName(data, sheet.item.exerciseId)} keeps all its history under Progress. The new exercise keeps the same sets, reps and rest, and its own history and notes starts with its first session (or continues, if you've done it before). {plan.name}'s
               total volume chart carries on as normal.
             </>
           }
@@ -191,7 +191,6 @@ function ItemCard({ item, name, routineId, day, onReplace, onMore }: { item: Pla
   const [reps, setReps] = useState(item.reps);
   const [rest, setRest] = useState(mmss(item.restSec));
   const [deload, setDeload] = useState(item.deloadSets !== undefined ? String(item.deloadSets) : '');
-  const [note, setNote] = useState(item.note);
   const id = item.id;
 
   return (
@@ -266,20 +265,6 @@ function ItemCard({ item, name, routineId, day, onReplace, onMore }: { item: Pla
             const n = parseInt(e.target.value, 10);
             if (!e.target.value.trim()) clearDeloadOverride(routineId, day, id);
             else if (n >= 1 && n <= 20) updateItem(routineId, day, id, { deloadSets: n });
-          }}
-        />
-      </label>
-      <label style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        <span className="sr-only">Note for {name}</span>
-        <textarea
-          className="text-input"
-          rows={2}
-          style={{ background: 'var(--bar)', fontSize: 15, borderRadius: 10 }}
-          placeholder="Note (cues, setup, seat height…)"
-          value={note}
-          onChange={(e) => {
-            setNote(e.target.value);
-            updateItem(routineId, day, id, { note: e.target.value });
           }}
         />
       </label>
